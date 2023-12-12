@@ -1,0 +1,176 @@
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+public class Sklad {
+    public static class Product {
+        String name;
+        String category;
+        int quantity;
+
+        public Product(String name, String category, int quantity) {
+            this.name = name;
+            this.category = category;
+            this.quantity = quantity;
+        }
+
+        @Override
+        public String toString() {
+            return name + " (" + category + ")";
+        }
+    }
+
+    public static class Supplier {
+        String name;
+
+        public Supplier(String name) {
+            this.name = name;
+        }
+
+        @Override
+        public String toString() {
+            return name;
+        }
+    }
+
+    public static class Customer {
+        String name;
+
+        public Customer(String name) {
+            this.name = name;
+        }
+
+        @Override
+        public String toString() {
+            return name;
+        }
+    }
+
+    public static class Warehouse {
+        List<Product> products = new ArrayList<>();
+        List<Supplier> suppliers = new ArrayList<>();
+        List<Customer> customers = new ArrayList<>();
+
+        public void addProduct(Product product) {
+            products.add(product);
+        }
+        public void addQuantityToProduct(Product product, int quantityToAdd) {
+            for (Product existingProduct : products) {
+                if (existingProduct.equals(product)) {
+                    existingProduct.quantity += quantityToAdd;
+                    System.out.println(quantityToAdd + " единиц '" + product.name + "' добавлено.");
+                    return;
+                }
+            }
+            System.out.println("Продукт '" + product.name + "' не найден на складе.");
+        }
+
+        public void releaseProduct(Product product, Customer customer, int quantity) {
+            for (Product availableProduct : products) {
+                if (availableProduct.equals(product) && availableProduct.quantity >= quantity) {
+                    availableProduct.quantity -= quantity;
+                    System.out.println(quantity + " единиц '" + product.name +
+                            "' отпущено покупателю '" + customer.name + "'.");
+                    return;
+                }
+            }
+            System.out.println(" Недостаточное количество единиц '" + product.name + "' на складе.");
+        }
+
+        public List<Product> getAvailableProducts(String category) {
+            List<Product> availableProducts = new ArrayList<>();
+            for (Product product : products) {
+                if (product.category.equals(category) && product.quantity > 0) {
+                    availableProducts.add(product);
+                }
+            }
+            return availableProducts;
+        }
+
+        public boolean checkProductAvailable(Product product) {
+            return products.contains(product) && product.quantity > 0;
+        }
+
+        public Map<String, List<Product>> groupProductsByCategory() {
+            Map<String, List<Product>> productGroups = new HashMap<>();
+            for (Product product : products) {
+                productGroups.computeIfAbsent(product.category, k -> new ArrayList<>()).add(product);
+            }
+            return productGroups;
+        }
+
+        public String printProductGroupsByCategory() {
+            Map<String, List<Product>> productGroups = groupProductsByCategory();
+            StringBuilder result = new StringBuilder("Товары по категориям:\n");
+            for (Map.Entry<String, List<Product>> entry : productGroups.entrySet()) {
+                result.append(entry.getKey()).append(": ").append(entry.getValue()).append("\n");
+            }
+            return result.toString();
+        }
+
+        public String printAvailableProductsByCategory(String category) {
+            List<Product> availableProducts = getAvailableProducts(category);
+            StringBuilder result = new StringBuilder("Доступные товары в " + category + ":\n");
+
+            if (availableProducts.isEmpty()) {
+                result.append("none\n");
+            } else {
+                for (Product availableProduct : availableProducts) {
+                    result.append(availableProduct.name).append(": ").append(availableProduct.quantity).append("\n");
+                }
+            }
+
+            return result.toString();
+        }
+
+
+        public List<Supplier> getSupplierInformation() {
+            return suppliers;
+        }
+
+        public List<Customer> getCustomerInformation() {
+            return customers;
+        }
+    }
+
+    public static void main(String[] args) {
+        Warehouse warehouse = new Warehouse();
+
+        Supplier supplier1 = new Supplier("SUPERDUPERSHOP");
+        Supplier supplier2 = new Supplier("IKEA");
+
+        Customer customer1 = new Customer("Вова Пупин");
+        Customer customer2 = new Customer("Мария Михайловна");
+
+        Product product1 = new Product("супер-дупер продукт", "супер", 10);
+        Product product2 = new Product("когтеточка", "животные", 1);
+
+        warehouse.suppliers.add(supplier1);
+        warehouse.suppliers.add(supplier2);
+        warehouse.customers.add(customer1);
+        warehouse.customers.add(customer2);
+
+        warehouse.addProduct(product1);
+        warehouse.addProduct(product2);
+
+        System.out.println(warehouse.printProductGroupsByCategory());
+
+        warehouse.releaseProduct(product1, customer1, 4);
+
+        System.out.println(warehouse.printAvailableProductsByCategory("супер"));
+
+        warehouse.releaseProduct(product1, customer1, 6);
+
+        System.out.println(warehouse.printAvailableProductsByCategory("супер"));
+
+        warehouse.addQuantityToProduct(product1, 10);
+        System.out.println(warehouse.printAvailableProductsByCategory("супер"));
+
+        System.out.println("товар '" + product2 + "' наличие на складе: " +
+                warehouse.checkProductAvailable(product2));
+
+        System.out.println("Поставщики: " + warehouse.getSupplierInformation());
+        System.out.println("Покупатели: " + warehouse.getCustomerInformation());
+    }
+}
